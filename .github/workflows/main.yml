@@ -36,8 +36,10 @@ jobs:
                 repo: context.repo.repo,
                 issue_number: context.payload.pull_request.number,
                 body: "PR description does not follow the required template. Please update it to include:\n\n" +
+                      "`## Description`\n" +
                       "`## Test plan`\n" +
                       "`## Documentation update`\n\n" +
-                      "Thank you!"
+                      "❌ PR merge is blocked until this is fixed."
               });
+              core.setFailed("PR description is missing required sections.");
             }
