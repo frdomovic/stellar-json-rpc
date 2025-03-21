@@ -3,6 +3,10 @@ on:
   pull_request:
     types: [opened, edited]
 
+permissions:
+  pull-requests: write  # Allow commenting on PRs
+  contents: read        # Required for reading PR data
+
 jobs:
   check-description:
     runs-on: ubuntu-latest
@@ -21,7 +25,7 @@ jobs:
             function isValidDescription(body) {
               return requiredSections.every(section => 
                 body.includes(section) && 
-                body.split(section)[1].trim().length > 10 // Ensure text exists under section
+                body.split(section)[1].trim().length > 10
               );
             }
 
@@ -30,9 +34,9 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.pull_request.number,
-                body: "PR description does not follow the required template. Please ensure it includes:\n\n" +
-                      "`## Test plan` with a description of test cases\n" +
-                      "`## Documentation update` mentioning relevant documentation updates\n\n" +
-                      "Please update your PR description accordingly."
+                body: "PR description does not follow the required template. Please update it to include:\n\n" +
+                      "`## Test plan`\n" +
+                      "`## Documentation update`\n\n" +
+                      "Thank you!"
               });
             }
