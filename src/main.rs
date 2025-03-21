@@ -192,7 +192,7 @@ fn get_server() -> Server {
 #[tokio::main]
 async fn main() {
     let server = get_server();
-    let contract_id = "CDOQVQE4UARLUXZHOT5YVKTE4UV4CT5PK6UXYOHILWQNSSO4POGJF6PS";
+    let contract_id = "";
     let keypair =
         Keypair::from_secret("SDF7RFYEIFGPUKL2EWJCVRR3XENJEMBAR26COHD4VTRUYG3WD57EHSJM").unwrap();
     let contract_data: ContextData = ContextData {
