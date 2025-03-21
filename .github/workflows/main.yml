@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   check-description:
+    permissions: write-all
     runs-on: ubuntu-latest
     steps:
       - name: Check PR Description
