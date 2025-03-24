@@ -1,49 +1,27 @@
-name: PR Validation
-
-on:
-  pull_request:
-    types: [opened, edited]
-
-permissions:
-  pull-requests: write
-  contents: read
-
 jobs:
   check-description:
-    name: Check PR Description
     runs-on: ubuntu-latest
-    outputs:
-      comment_action: ${{ steps.validate_description.outputs.comment_action }}
-      comment_content: ${{ steps.validate_description.outputs.comment_content }}
     steps:
-      - name: Validate PR Description
-        id: validate_description
+      - name: Check PR Description
+        id: check-description
         run: |
-          # Required sections in the PR description
           required_sections=("## Description" "## Test plan" "## Documentation update")
-          
-          # Get PR body
           pr_body="${{ github.event.pull_request.body }}"
           missing_sections=()
-
-          # Check if each required section exists in the PR body
+          
           for section in "${required_sections[@]}"; do
             if [[ -z $(echo "$pr_body" | grep -i "$section") ]]; then
               missing_sections+=("$section")
             fi
           done
-
-          # Set comment_action based on whether sections are missing
+          
           if [[ ${#missing_sections[@]} -gt 0 ]]; then
-            # If there are missing sections, recreate the comment
             echo "comment_action=recreate" >> "$GITHUB_OUTPUT"
             echo "comment_content=❌ **PR is missing required sections:** ${missing_sections[*]}.\n\nPlease update the PR description.\n\n**❌ PR merge is blocked until this is fixed.**" >> "$GITHUB_OUTPUT"
           else
-            # If all required sections are present, delete the comment (if any)
             echo "comment_action=delete" >> "$GITHUB_OUTPUT"
             echo "comment_content=" >> "$GITHUB_OUTPUT"
-          fi
-
+          
   update-comment:
     name: Update PR Comment
     runs-on: ubuntu-latest
@@ -53,10 +31,10 @@ jobs:
         uses: thollander/actions-comment-pull-request@v3
         with:
           pr-number: ${{ github.event.pull_request.number }}
-          comment-tag: pr-description-check  # The unique tag to identify the comment
-          mode: ${{ needs.check-description.outputs.comment_action }}  # Set to 'recreate' or 'delete'
-          message: ${{ needs.check-description.outputs.comment_content }}  # The message content based on PR validation
+          comment-tag: pr-description-check  # Use the same tag for consistency
+          mode: ${{ needs.check-description.outputs.comment_action }}  # 'recreate' or 'delete'
+          message: ${{ needs.check-description.outputs.comment_content }}  # The message to post
 
       - name: Fail job if PR description is invalid
         if: needs.check-description.outputs.comment_action == 'recreate'
-        run: exit 1  # If comment_action is 'recreate', we block the PR by failing this job
+        run: exit 1  # Block the PR if the description is invalid
