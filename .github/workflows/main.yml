@@ -34,6 +34,7 @@ jobs:
                               requiredSections.map(s => `✅ ${s}`).join("\n") +
                               `\n\n❌ **PR merge is blocked until this is fixed.**`;
               core.setOutput("comment_body", message);
+              core.setFailed("PR description is missing required sections.");  # 🚨 Marks job as failed!
             } else {
               core.setOutput("is_invalid", "false");
             }
