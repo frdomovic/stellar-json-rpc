@@ -30,11 +30,11 @@ jobs:
 
             if (missingSections.length > 0) {
               core.setOutput("is_invalid", "true");
-              const message = `🚨 **PR description is missing required sections!**\n\n` +
-                              requiredSections.map(s => `✅ ${s}`).join("\n") +
-                              `\n\n❌ **PR merge is blocked until this is fixed.**`;
-              core.setOutput("comment_body", message);
-              core.setFailed("PR description is missing required sections.");  # 🚨 Marks job as failed!
+              core.setOutput("comment_body", 
+                `🚨 **PR description is missing required sections!**\n\n` +
+                requiredSections.map(s => `✅ ${s}`).join("\n") +
+                `\n\n❌ **PR merge is blocked until this is fixed.**`
+              );
             } else {
               core.setOutput("is_invalid", "false");
             }
@@ -92,3 +92,7 @@ jobs:
               repo: context.repo.repo,
               comment_id: ${{ steps.find_comment.outputs.comment_id }}
             });
+
+      - name: Fail Job if PR is Invalid
+        if: steps.validate_description.outputs.is_invalid == 'true'
+        run: exit 1  # 🚨 NOW the job fails AFTER posting the comment!
