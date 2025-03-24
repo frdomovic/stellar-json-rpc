@@ -42,14 +42,16 @@ jobs:
     runs-on: ubuntu-latest
     needs: check-description
     steps:
+      - name: Create temporary comment file
+        run: echo -e "${{ needs.check-description.outputs.comment_content }}" > ./reports/description-check.md
+
       - name: Update pull request comment
         uses: thollander/actions-comment-pull-request@v3
         with:
-          file-path: ./reports/report.md
+          file-path: ./reports/description-check.md
           pr-number: ${{ github.event.pull_request.number }}
           comment-tag: pr-description-check
           mode: ${{ needs.check-description.outputs.comment_action }}
-          comment: ${{ needs.check-description.outputs.comment_content }}
 
       - name: Fail job if PR description is invalid
         if: needs.check-description.outputs.comment_action == 'recreate'
