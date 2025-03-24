@@ -37,7 +37,10 @@ jobs:
           if [[ ${#missing_sections[@]} -gt 0 ]]; then
             # If there are missing sections, recreate the comment
             echo "comment_action=recreate" >> "$GITHUB_OUTPUT"
-            echo "comment_content=❌ **PR is missing required sections:** ${missing_sections[*]}.\n\nPlease update the PR description.\n\n**❌ PR merge is blocked until this is fixed.**" >> "$GITHUB_OUTPUT"
+            echo "comment_content=❌ **PR is missing required sections:** 
+            ${missing_sections[*]}.
+            Please update the PR description.
+            **❌ PR merge is blocked until this is fixed.**" >> "$GITHUB_OUTPUT"
           else
             # If all required sections are present, delete the comment (if any)
             echo "comment_action=delete" >> "$GITHUB_OUTPUT"
