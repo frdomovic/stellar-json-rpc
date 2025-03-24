@@ -34,15 +34,15 @@ jobs:
 
             if (missingSections.length > 0) {
               core.setOutput("is_invalid", "true");
-              const message = `PR description does not follow the required template. Please update it to include:\n\n` +
-                              requiredSections.map(s => `- ${s}`).join("\n") +
-                              "\n\n❌ PR merge is blocked until this is fixed.";
+              const message = `🚨 **PR description is missing required sections!**\n\n` +
+                              requiredSections.map(s => `✅ ${s}`).join("\n") +
+                              `\n\n❌ **PR merge is blocked until this is fixed.**`;
               core.setOutput("comment_body", message);
             } else {
               core.setOutput("is_invalid", "false");
             }
 
-      - name: Post or Update PR Comment
+      - name: Update PR Comment
         if: steps.validate_description.outputs.is_invalid == 'true'
         uses: thollander/actions-comment-pull-request@v3
         with:
