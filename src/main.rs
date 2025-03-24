@@ -55,6 +55,7 @@ async fn query(
         .fee(10000u32)
         .add_operation(contract.call(method, params))
         .set_timeout(15)
+
         .expect("Transaction timeout")
         .build();
 
