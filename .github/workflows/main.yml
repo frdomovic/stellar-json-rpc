@@ -1,14 +1,15 @@
-name: PR Description Check
+name: PR
 on:
   pull_request:
     types: [opened, edited]
 
 permissions:
-  pull-requests: write  # Allow commenting on PRs
-  contents: read        # Required for reading PR data
+  pull-requests: write
+  contents: read
 
 jobs:
   check-description:
+    name: Check Description
     permissions: write-all
     runs-on: ubuntu-latest
     steps:
@@ -17,6 +18,7 @@ jobs:
         with:
           script: |
             const requiredSections = [
+              "## Description",
               "## Test plan",
               "## Documentation update"
             ];
@@ -30,16 +32,35 @@ jobs:
               );
             }
 
-            if (!isValidDescription(prBody)) {
-              github.rest.issues.createComment({
+            const templateMessage = "PR description does not follow the required template. Please update it to include:\n\n" +
+              requiredSections.map(section => `\`${section}\``).join("\n") + 
+              "\n\n❌ PR merge is blocked until this is fixed.";
+
+            // Check if PR description is valid
+            const isValid = isValidDescription(prBody);
+            
+            if (!isValid) {
+              await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: context.payload.pull_request.number,
-                body: "PR description does not follow the required template. Please update it to include:\n\n" +
-                      "`## Description`\n" +
-                      "`## Test plan`\n" +
-                      "`## Documentation update`\n\n" +
-                      "❌ PR merge is blocked until this is fixed."
+                body: templateMessage
               });
+              
               core.setFailed("PR description is missing required sections.");
             }
+            
+      - name: Update PR Comment
+        if: ${{ failure() }}
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          message: |
+            PR description does not follow the required template. Please update it to include:
+
+            `## Description`
+            `## Test plan`
+            `## Documentation update`
+
+            ❌ PR merge is blocked until this is fixed.
+          comment-tag: pr-description-check
+          mode: recreate
