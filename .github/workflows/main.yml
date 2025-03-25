@@ -15,6 +15,7 @@ jobs:
     outputs:
       comment_action: ${{ steps.validate_description.outputs.comment_action }}
       comment_content: ${{ steps.validate_description.outputs.comment_content }}
+      is_valid: ${{ steps.validate_description.outputs.is_valid }}
     steps:
       - name: Validate Description
         id: validate_description
