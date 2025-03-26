@@ -1,4 +1,4 @@
-name: PR Check
+name: PR
 
 on:
   pull_request:
@@ -10,19 +10,14 @@ permissions:
 
 jobs:
   check-description:
-    name: Check PR Description
+    name: Check Description
     runs-on: ubuntu-latest
     outputs:
       comment_action: ${{ steps.validate_description.outputs.comment_action }}
       comment_content: ${{ steps.validate_description.outputs.comment_content }}
       is_valid: ${{ steps.validate_description.outputs.is_valid }}
     steps:
-      - name: Debug Environment Variables
-        run: |
-          echo "REQUIRED_SECTIONS received:"
-          echo "${{ env.REQUIRED_SECTIONS }}" | tee debug_required_sections.log
-
-      - name: Validate PR Description
+      - name: Validate Description
         id: validate_description
         env:
           REQUIRED_SECTIONS: |
@@ -30,29 +25,31 @@ jobs:
             ## Test plan
             ## Documentation update
         run: |
-          # Read required sections from env var safely
+          # Read required sections from env var, one per line
           readarray -t required_sections <<< "$REQUIRED_SECTIONS"
           pr_body="${{ github.event.pull_request.body }}"
-
-          # Escape special characters to prevent command execution
-          safe_pr_body=$(echo "$pr_body" | sed 's/`//g; s/\$/\\$/g')
-
-          missing_sections=()
           
+          # Write PR body to a temporary file to avoid issues with special characters
+          echo "$pr_body" > pr_body.txt
+          missing_sections=()
+
           for section in "${required_sections[@]}"; do
-            if ! grep -Fq "$section" <<< "$safe_pr_body"; then
+            if ! grep -q -i "$section" pr_body.txt; then
               missing_sections+=("$section")
             fi
           done
           
+          # Clean up temporary file
+          rm pr_body.txt
+
           if [[ ${#missing_sections[@]} -gt 0 ]]; then
             echo "comment_action=recreate" >> "$GITHUB_OUTPUT"
-            echo "comment_content=**PR is missing required sections:** <br><br>${missing_sections[*]}.<br><br>Please update the PR description.<br><br>**❌ PR merge is blocked until this is fixed.**" >> "$GITHUB_OUTPUT"
             echo "is_valid=false" >> "$GITHUB_OUTPUT"
+            echo "comment_content=**PR is missing required sections:** <br><br>${missing_sections[*]}.<br><br>Please update the PR description.<br><br>**❌ PR merge is blocked until this is fixed.**" >> "$GITHUB_OUTPUT"
           else
             echo "comment_action=delete" >> "$GITHUB_OUTPUT"
-            echo "comment_content=" >> "$GITHUB_OUTPUT"
             echo "is_valid=true" >> "$GITHUB_OUTPUT"
+            echo "comment_content=" >> "$GITHUB_OUTPUT"
           fi
 
   update-comment:
@@ -68,6 +65,6 @@ jobs:
           mode: ${{ needs.check-description.outputs.comment_action }}
           message: ${{ needs.check-description.outputs.comment_content }}
 
-      - name: Fail if PR description is invalid
+      - name: Fail job if PR description is invalid
         if: needs.check-description.outputs.is_valid == 'false'
         run: exit 1
