@@ -1,4 +1,4 @@
-name: PR
+name: PR Check
 
 on:
   pull_request:
@@ -10,14 +10,19 @@ permissions:
 
 jobs:
   check-description:
-    name: Check Description
+    name: Check PR Description
     runs-on: ubuntu-latest
     outputs:
       comment_action: ${{ steps.validate_description.outputs.comment_action }}
       comment_content: ${{ steps.validate_description.outputs.comment_content }}
       is_valid: ${{ steps.validate_description.outputs.is_valid }}
     steps:
-      - name: Validate Description
+      - name: Debug Environment Variables
+        run: |
+          echo "REQUIRED_SECTIONS received:"
+          echo "${{ env.REQUIRED_SECTIONS }}" | tee debug_required_sections.log
+
+      - name: Validate PR Description
         id: validate_description
         env:
           REQUIRED_SECTIONS: |
@@ -25,16 +30,26 @@ jobs:
             ## Test plan
             ## Documentation update
         run: |
-          # Read required sections from env var, one per line
+          # Debug: Print PR Body
+          echo "PR Body received:"
+          echo "${{ github.event.pull_request.body }}" | tee debug_pr_body.log
+
+          # Read required sections from environment variable
           mapfile -t required_sections <<< "$REQUIRED_SECTIONS"
+
+          # Capture PR body from event
           pr_body="${{ github.event.pull_request.body }}"
           missing_sections=()
 
+          # Validate sections exist
           for section in "${required_sections[@]}"; do
             if ! grep -qiF "$section" <<< "$pr_body"; then
               missing_sections+=("$section")
             fi
           done
+
+          # Debug output
+          echo "Missing sections: ${missing_sections[*]}"
 
           if [[ ${#missing_sections[@]} -gt 0 ]]; then
             echo "comment_action=recreate" >> "$GITHUB_OUTPUT"
@@ -59,6 +74,6 @@ jobs:
           mode: ${{ needs.check-description.outputs.comment_action }}
           message: ${{ needs.check-description.outputs.comment_content }}
 
-      - name: Fail job if PR description is invalid
+      - name: Fail if PR description is invalid
         if: needs.check-description.outputs.is_valid == 'false'
         run: exit 1
