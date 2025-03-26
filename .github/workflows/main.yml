@@ -26,16 +26,30 @@ jobs:
             ## Documentation update
         run: |
           # Read required sections from env var, one per line
-          readarray -t required_sections <<< "$REQUIRED_SECTIONS"
+          mapfile -t required_sections <<< "$REQUIRED_SECTIONS"
           pr_body="${{ github.event.pull_request.body }}"
           missing_sections=()
-          
+
+          # Debugging: Print PR body and required sections
+          echo "PR Body: $pr_body"
+          echo "Required Sections:"
+          printf '%s\n' "${required_sections[@]}"
+
+          # Ensure PR body is not empty
+          if [[ -z "$pr_body" ]]; then
+            echo "PR description is empty!"
+            echo "comment_action=recreate" >> "$GITHUB_OUTPUT"
+            echo "comment_content=**PR description is empty. Please add the required sections.**" >> "$GITHUB_OUTPUT"
+            echo "is_valid=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
           for section in "${required_sections[@]}"; do
-            if ! echo "$pr_body" | grep -qiF "$section"; then
+            if ! printf "%s\n" "$pr_body" | grep -qiF "$section"; then
               missing_sections+=("$section")
             fi
           done
-          
+
           if [[ ${#missing_sections[@]} -gt 0 ]]; then
             echo "comment_action=recreate" >> "$GITHUB_OUTPUT"
             echo "comment_content=**PR is missing required sections:** <br><br>${missing_sections[*]}.<br><br>Please update the PR description.<br><br>**❌ PR merge is blocked until this is fixed.**" >> "$GITHUB_OUTPUT"
