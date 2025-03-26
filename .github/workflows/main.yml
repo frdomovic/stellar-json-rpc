@@ -30,35 +30,29 @@ jobs:
             ## Test plan
             ## Documentation update
         run: |
-          # Debug: Print PR Body
-          echo "PR Body received:"
-          echo "${{ github.event.pull_request.body }}" | tee debug_pr_body.log
-
-          # Read required sections from environment variable
-          mapfile -t required_sections <<< "$REQUIRED_SECTIONS"
-
-          # Capture PR body from event
+          # Read required sections from env var safely
+          readarray -t required_sections <<< "$REQUIRED_SECTIONS"
           pr_body="${{ github.event.pull_request.body }}"
-          missing_sections=()
 
-          # Validate sections exist
+          # Escape special characters to prevent command execution
+          safe_pr_body=$(echo "$pr_body" | sed 's/`//g; s/\$/\\$/g')
+
+          missing_sections=()
+          
           for section in "${required_sections[@]}"; do
-            if ! grep -qiF "$section" <<< "$pr_body"; then
+            if ! grep -Fq "$section" <<< "$safe_pr_body"; then
               missing_sections+=("$section")
             fi
           done
-
-          # Debug output
-          echo "Missing sections: ${missing_sections[*]}"
-
+          
           if [[ ${#missing_sections[@]} -gt 0 ]]; then
             echo "comment_action=recreate" >> "$GITHUB_OUTPUT"
-            echo "is_valid=false" >> "$GITHUB_OUTPUT"
             echo "comment_content=**PR is missing required sections:** <br><br>${missing_sections[*]}.<br><br>Please update the PR description.<br><br>**❌ PR merge is blocked until this is fixed.**" >> "$GITHUB_OUTPUT"
+            echo "is_valid=false" >> "$GITHUB_OUTPUT"
           else
             echo "comment_action=delete" >> "$GITHUB_OUTPUT"
-            echo "is_valid=true" >> "$GITHUB_OUTPUT"
             echo "comment_content=" >> "$GITHUB_OUTPUT"
+            echo "is_valid=true" >> "$GITHUB_OUTPUT"
           fi
 
   update-comment:
