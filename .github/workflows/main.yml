@@ -24,8 +24,9 @@ jobs:
             ## Description
             ## Test plan
             ## Documentation update
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          printf '%s' "${{ github.event.pull_request.body }}" > pr_body.txt
+          printf '%s' "$PR_BODY" > pr_body.txt
 
           required_sections=()
           while IFS= read -r line; do
