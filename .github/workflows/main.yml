@@ -32,17 +32,16 @@ jobs:
             [[ -n "$line" ]] && required_sections+=("$line")
           done <<< "$REQUIRED_SECTIONS"
 
-          echo "DEBUG: Required sections array:"
-          printf '  - %s\n' "${required_sections[@]}"
-
           missing_sections=()
 
-          for section in "${required_sections[@]}"; do
-            echo "DEBUG: Checking for section: '$section'"
-            if ! grep -Fxq "$section" pr_body.txt; then
+          while IFS= read -r section; do
+            if ! grep -q -x -F "$section" "pr_body.txt"; then
               missing_sections+=("$section")
+              echo "Section not found: $section"
+            else
+              echo "Section found: $section"
             fi
-          done
+          done <<< "$REQUIRED_SECTIONS"
 
           if [[ ${#missing_sections[@]} -gt 0 ]]; then
             echo "comment_action=recreate" >> "$GITHUB_OUTPUT"
