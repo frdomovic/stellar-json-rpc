@@ -35,7 +35,7 @@ jobs:
           missing_sections=()
 
           while IFS= read -r section; do
-            if ! grep -q -x -F "$section" "pr_body.txt"; then
+            if ! grep -q -F "^$section" "pr_body.txt"; then
               missing_sections+=("$section")
               echo "Section not found: $section"
             else
