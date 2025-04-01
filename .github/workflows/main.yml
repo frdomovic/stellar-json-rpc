@@ -25,7 +25,7 @@ jobs:
             ## Test plan
             ## Documentation update
         run: |
-          echo "${{ github.event.pull_request.body }}" > pr_body.txt
+          printf "%s" "${{ github.event.pull_request.body }}" > pr_body.txt
           
           readarray -t required_sections <<< "$REQUIRED_SECTIONS"
           missing_sections=()
