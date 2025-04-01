@@ -25,11 +25,13 @@ jobs:
             ## Test plan
             ## Documentation update
         run: |
-          cat <<EOF > pr_body.txt
-          ${{ github.event.pull_request.body }}
-          EOF
-          
-          readarray -t required_sections <<< "$REQUIRED_SECTIONS"
+          printf '%s' "${{ github.event.pull_request.body }}" > pr_body.txt
+
+          required_sections=()
+          while IFS= read -r line; do
+            [[ -n "$line" ]] && required_sections+=("$line")
+          done <<< "$REQUIRED_SECTIONS"
+
           missing_sections=()
 
           for section in "${required_sections[@]}"; do
