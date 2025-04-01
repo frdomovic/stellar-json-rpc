@@ -26,11 +26,11 @@ jobs:
             ## Documentation update
         run: |
           readarray -t required_sections <<< "$REQUIRED_SECTIONS"
-          pr_body="${{ github.event.pull_request.body }}"
+          pr_body_base64=$(echo -n "${{ github.event.pull_request.body }}" | base64 -w0)
           missing_sections=()
 
           for section in "${required_sections[@]}"; do
-            if ! echo "$pr_body" | grep -q -i "$section"; then
+            if ! echo "$pr_body_base64" | base64 --decode | grep -q -i "$section"; then
               missing_sections+=("$section")
             fi
           done
