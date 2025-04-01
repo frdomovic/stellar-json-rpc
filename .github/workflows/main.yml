@@ -27,10 +27,10 @@ jobs:
         run: |
           readarray -t required_sections <<< "$REQUIRED_SECTIONS"
           pr_body="${{ github.event.pull_request.body }}"
-	  missing_sections=()
+          missing_sections=()
 
-	  for section in "${required_sections[@]}"; do
-	    if ! echo "$pr_body" | grep -q -i "$section"; then
+          for section in "${required_sections[@]}"; do
+            if ! echo "$pr_body" | grep -q -i "$section"; then
               missing_sections+=("$section")
             fi
           done
